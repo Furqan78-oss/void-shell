@@ -1,0 +1,46 @@
+# Hyprland & Wayland Core
+hyprland
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+qt6-wayland
+qt6-svg
+qt6-5compat
+polkit-kde-agent
+wl-clipboard
+cliphist
+grim
+slurp
+brightnessctl
+playerctl
+
+# Desktop Shell, Wallpaper & Theme Engine
+quickshell
+matugen
+swww
+jq
+bc
+
+# Terminal & TUI Workflow Base
+kitty
+fish
+starship
+fzf
+ripgrep
+fd
+btop
+yazi
+neovim
+
+# Audio, Bluetooth & Network
+pipewire
+pipewire-pulse
+wireplumber
+pamixer
+bluez
+bluez-utils
+networkmanager
+
+# Universal Font & Icons
+ttf-jetbrains-mono-nerd
+noto-fonts-emoji
+papirus-icon-theme
