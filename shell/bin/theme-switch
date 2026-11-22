@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DOTFILES_DIR="$HOME/dotfiles"
+CACHE_DIR="$HOME/.cache/void-shell"
+STATE_FILE="$CACHE_DIR/current_mode"
+mkdir -p "$CACHE_DIR"
+
+MODE="${1:-toggle}"
+CUSTOM_WALL="${2:-}"
+
+if [ "$MODE" = "toggle" ]; then
+    CURRENT="$(cat "$STATE_FILE" 2>/dev/null || echo "mono")"
+    if [ "$CURRENT" = "dynamic" ]; then
+        MODE="mono"
+    else
+        MODE="dynamic"
+    fi
+fi
+
+# Pick wallpaper from the mode's dedicated folder if none was passed
+if [ -z "$CUSTOM_WALL" ]; then
+    WALL_DIR="$DOTFILES_DIR/wallpapers/$MODE"
+    WALLPAPER="$(find "$WALL_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | shuf -n 1 || true)"
+else
+    WALLPAPER="$CUSTOM_WALL"
+fi
+
+# Apply wallpaper with swww if available and a wallpaper exists
+if [ -n "${WALLPAPER:-}" ] && command -v swww >/dev/null 2>&1; then
+    pgrep -x swww-daemon >/dev/null || swww-daemon &
+    sleep 0.2
+    swww img "$WALLPAPER" --transition-type grow --transition-pos 0.5,0.98 --transition-duration 0.8 --transition-fps 60
+fi
+
+if [ "$MODE" = "dynamic" ] && [ -n "${WALLPAPER:-}" ]; then
+    matugen image "$WALLPAPER" -c "$HOME/.config/matugen/config.toml"
+else
+    # Pure Monochrome Palette (locked grayscale, no dynamic extraction)
+    cat << 'MONOHYPR' > "$CACHE_DIR/colors-hypr.conf"
+$active_border = rgba(f5f5f5ee) rgba(737373ee) 45deg
+$inactive_border = rgba(26262666)
+MONOHYPR
+
+    cat << 'MONOKITTY' > "$CACHE_DIR/colors-kitty.conf"
+background #090909
+foreground #f5f5f5
+cursor #ffffff
+selection_background #262626
+selection_foreground #ffffff
+color0 #090909
+color1 #d4d4d4
+color2 #a3a3a3
+color3 #737373
+color4 #e5e5e5
+color5 #bdbdbd
+color6 #8f8f8f
+color7 #d4d4d4
+color8 #525252
+color9 #ffffff
+color10 #d4d4d4
+color11 #a3a3a3
+color12 #f5f5f5
+color13 #e5e5e5
+color14 #bdbdbd
+color15 #ffffff
+MONOKITTY
+
+    cat << 'MONOJSON' > "$CACHE_DIR/colors.json"
+{
+  "mode": "mono",
+  "surface": "#090909",
+  "surfaceContainer": "#121212",
+  "surfaceContainerHigh": "#1c1c1c",
+  "onSurface": "#f5f5f5",
+  "onSurfaceVariant": "#a3a3a3",
+  "primary": "#ffffff",
+  "onPrimary": "#090909",
+  "secondary": "#737373",
+  "outline": "#2e2e2e"
+}
+MONOJSON
+fi
+
+echo "$MODE" > "$STATE_FILE"
+
+# Live-reload Hyprland & Kitty if running
+command -v hyprctl >/dev/null 2>&1 && hyprctl reload >/dev/null 2>&1 || true
+pkill -USR1 kitty 2>/dev/null || true
+
+echo "[void-shell] Switched theme to: $MODE"
